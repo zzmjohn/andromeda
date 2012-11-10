@@ -38,7 +38,8 @@ let equal ctx e1 e2 =
       | Lambda a1, Lambda a2 -> equal_abstraction a1 a2
       | (Var _ | App _ | Universe _ | Pi _ | Lambda _), _ -> false
   and equal_abstraction (x, t1, e1) (y, t2, e2) =
-    equal t1 t2 && (equal e1 (subst [(y, Var x)] e2))
+    let z = Var (refresh x) in
+      equal t1 t2 && (equal (subst [(x,z)] e1) (subst [(y, z)] e2))
   in
     equal (normalize ctx e1) (normalize ctx e2)
 
