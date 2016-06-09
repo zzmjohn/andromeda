@@ -400,7 +400,7 @@ and check ({Location.thing=c';loc} as c) t_check =
     Equal.coerce ~loc je t_check >>=
     begin function
       | Some je -> Runtime.return je
-      | None -> Runtime.(error ~loc (TypeMismatch (t2, t_check)))
+      | None -> Runtime.(error ~loc (TypeMismatchCheckingMode (je, t_check)))
     end
 
   | Syntax.Lambda (x,u,c) ->
