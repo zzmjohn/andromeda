@@ -10,6 +10,9 @@ let f_apply f θ =
 (* The type of all universe indices *)
 constant index : Type
 
+(* Convenience *)
+constant zero : index
+
 (* The partial ordering of universe indices *)
 
 constant ( < ) : index → index → Type
@@ -145,48 +148,58 @@ let name_of T i =
 let universe_handler =
   handler
 
-  | coerce (⊢ ?a : ?B) (⊢ Type) =>
-    match whnf B with
-    | ⊢ ?ξ : _ ≡ U ?i => 
-      match whnf (El i a) with ⊢ _ : _ ≡ ?A => yield (Coercible A) end
-    | _ => yield (coerce a Type)
-    end
+  | coerce (⊢ ?a : ?B) (⊢ ?C)  =>
 
-  | coerce (⊢ ?a : ?B) (⊢ U ?j) =>
-    match whnf B with
-    | ⊢ _ : _ ≡ Type =>
-      match name_of a j with
-      | None => yield NotCoercible
-      | Some ?a => yield (Coercible a)
+    match whnf C with
+    | ⊢ ?ζ  : _ ≡ Type =>
+      match whnf B with
+      | ⊢ ?ξ : _ ≡ U ?i => 
+        match whnf (El i a) with ⊢ _ : _ ≡ ?A => yield (Coercible (convert A (symmetry ζ))) end
+      | _ => yield (coerce a C)
       end
-    | ⊢ _ : _ ≡ U ?i =>
-      let p = prove_leq i j in
-      yield (Coercible (lift i j p a))
+
+    | ⊢ ?ζ : _ ≡ U ?j =>
+      match whnf B with
+      | ⊢ _ : _ ≡ Type =>
+        match name_of a j with
+        | None => yield NotCoercible
+        | Some ?a => yield (Coercible (convert a (symmetry ζ)))
+        end
+      | ⊢ _ : _ ≡ U ?i =>
+        let p = prove_leq i j in
+        yield (Coercible (convert (lift i j p a) (symmetry ζ)))
+      end
+
+    | _ => yield (coerce a C)
     end
 
   | UU : None => 
-    assume i : index in
-    assume j : index in
+    let i = (? : index) in
+    let j = (? : index) in
     assume p : i < j in
       yield (u i j p)
 
   | UU : Some ?A =>
     match whnf A with
     | ⊢ ?ξ : _ ≡ U ?j =>
-        assume i : index in
+        let i = (? : index) in
         assume p : i < j in
           yield (convert (u i j p) (symmetry ξ))
     | ⊢ ?ξ : _ ≡ Type =>
-      assume i : index in
+      let i = (? : index) in
         yield (convert (U i) (symmetry ξ))
     end
-
+(*
   | equal (⊢ U ?i) (⊢ U ?j) =>
     assume θ : i ≡ j in
     yield (Some (f_apply U θ))
+*)
+
   end
 
 (* examples *)
+
+(*
 do
   with universe_handler handle
     Cow : UU
@@ -221,6 +234,7 @@ do with universe_handler handle
     A : UU
 
 do with universe_handler handle
-   (λ (A : UU) (a : A), a) : ∏ (B : UU), B → B
+   resolve ((λ (A : U ?) (a : A), a) : ∏ (B : U ?), B → B)
 
 
+*)

@@ -1,0 +1,6 @@
+#include_once "universes.m31"
+
+constant empty_name : U zero
+let empty = El zero empty_name
+
+constant ind_empty : Π (P : empty -> Type) (x : empty), P x

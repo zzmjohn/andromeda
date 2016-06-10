@@ -1,0 +1,71 @@
+(** The definition of booleans. *)
+#include_once "universes.m31" "emptyUU.m31" "unitUU.m31"
+
+
+constant bool_name : U zero
+let bool = El zero bool_name
+
+constant true : bool
+constant false : bool
+constant ind_bool :
+  Π (P : bool -> Type) (x : P true) (y : P false), Π (b : bool), P b
+
+constant ind_bool_true :
+  Π (P : bool -> Type) (x : P true) (y : P false), ind_bool P x y true == x
+
+constant ind_bool_false :
+  Π (P : bool -> Type) (x : P true) (y : P false), ind_bool P x y false == y
+
+(* We prove that "if b then true else false" equals "b". *)
+do with universe_handler handle
+  now betas = add_betas [ind_bool_true, ind_bool_false] in
+  ((ind_bool
+        (λ b, ind_bool (λ _, bool) true false b == b)
+        (refl true)
+        (refl false))
+   : Π (b : bool), ind_bool (λ _, bool) true false b == b)
+
+do with universe_handler handle UU
+
+(* Next we show that true and false are not equal. *)
+
+(* Be very careful about when reductions may happen
+   Better hint management would help here. *)
+(* do external "config" "verbosity" 3 *)
+
+let bool_disjoint (* : true ≡ false → empty *) = 
+    with universe_handler handle
+    λ (p : true == false),
+     let P = λ (b : bool), ind_bool (λ (_ : bool), UU) unit empty b in
+     let p =
+       now betas = add_betas [p] in
+         (refl (P true) : P true == P false) in
+     let p =
+       now betas = add_betas [ind_bool_false] in
+         p : P true == empty in
+     let p =
+       now betas = add_betas [ind_bool_true] in
+         p : unit == empty in
+     now betas = add_betas [p] in
+       let u = tt in u : empty
+
+
+(* let's be less careful. *)
+now betas = add_beta ind_bool_true
+now betas = add_beta ind_bool_false
+
+let bool_disjoint' (* true == false → empty *) = λ (p : true ≡ false),
+     let P = λ (b : bool), ind_bool (λ (_ : bool), UU) unit empty b in
+     let p =
+         (* we need to remove the global hints, otherwise
+            P true ~~> unit and P false ~~> empty *)
+         now betas = [] in
+         now betas = add_betas [p] in
+         (refl (P true) : P true == P false) in
+
+     let p = p : unit == empty in
+     now betas = add_betas [p] in
+     let u = tt in u : empty
+
+do with universe_handler handle bool_disjoint'
+

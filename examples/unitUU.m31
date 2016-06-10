@@ -1,0 +1,16 @@
+#include_once "universes.m31"
+
+constant unit_name : U zero
+let unit = El zero unit_name
+
+constant tt : unit
+
+constant unit_rect: Π (P : unit -> Type) (x : P tt) (u : unit), P u
+constant unit_iota: Π (P : unit -> Type) (x : P tt), unit_rect P x tt == x
+constant unit_eta : ∏ (x y : unit), x ≡ y
+now etas = add_eta unit_eta
+
+let unit_contractible = (λ x, refl x : x == tt) : ∀ (x : unit), x == tt
+
+(* Inhabit {} *)
+
