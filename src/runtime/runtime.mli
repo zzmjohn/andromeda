@@ -79,6 +79,7 @@ type error =
   | TermExpected of value
   | ClosureExpected of value
   | HandlerExpected of value
+  | FunctionExpected of Jdg.term
   | RefExpected of value
   | StringExpected of value
   | CoercibleExpected of value
