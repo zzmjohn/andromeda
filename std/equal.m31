@@ -156,7 +156,7 @@ and equal_term imps e1 e2 =
           match A' with
 
           | ⊢ forall (?x : ?C), ?D ⇒
-            match now hypotheses = x :: hypotheses in equal_term imps (e1' x) (e2' x) with
+            match (now hypotheses = x :: hypotheses in equal_term imps (e1' x) (e2' x)) with
             | None => None
             | Some ?xi =>
               (* D == (lambda x, D) x *)
@@ -328,7 +328,8 @@ and equal_term_whnf imps e1 e2 =
         end
       end
 
-    | (_, _) ⇒ None
+    | (_, _) => None
+
     end
   in
   match eq_by_congruence with
