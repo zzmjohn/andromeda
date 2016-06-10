@@ -77,10 +77,10 @@ operation UU : judgment
 
 (* A "temporary" "solution" *)
 let prove_leq i j =
-  assume p : i <= j in p
+  (? : i <= j)
 
 let prove_lt i j =
-  assume p : i < j in p
+  (? : i < j)
 
 (* Reverse_engineer the name of a type with a proof that
    it is correctly reverse_engineered *)
