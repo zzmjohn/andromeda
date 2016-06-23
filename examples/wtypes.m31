@@ -1,0 +1,47 @@
+constant W : ∏ (A : Type), (A → Type) → Type
+
+constant sup : 
+  ∏ (A : Type) (B : A → Type) (a : A), (B a → W A B) → W A B
+
+constant rect :
+  ∏ (A : Type) (B : A → Type) (P : W A B → Type),
+    (∏ (a : A) (f : B a → W A B),
+       (∏ (b : B a), P (f b)) → P (sup A B a f)) →
+    (∏ (t : W A B), P t)
+
+constant rec_iota :
+  ∏ (A : Type) (B : A → Type) (P : W A B → Type)
+  (s : (∏ (a : A) (f : B a → W A B),
+           (∏ (b : B a), P (f b)) → P (sup A B a f)))
+  (a : A) (f : B a → W A B),
+     rect A B P s (sup A B a f) ≡
+     s a f (λ b, rect A B P s (f b))
+
+(* Natural numbers. *)
+#include_once "bool.m31" "empty.m31" "unit.m31"
+
+constant Nat : Type
+constant Nat_def : Nat ≡ W bool (ind_bool (λ _, Type) unit empty)
+now betas = add_beta Nat_def
+
+(*
+let ξ = 
+ match
+   equal (Π (x : empty), (λ (_ : empty), Nat) x)
+         (ind_bool (λ (_ : bool), Type) unit empty false → W bool (ind_bool (λ (_ : bool), Type) unit empty))
+ with
+ | Some ?p => 
+   (* external "print_json" (typeof p) ; *)
+   p
+ end
+
+let x = (ind_empty (λ _, Nat))
+
+do print ("WHNF TYPEOF X", whnf (typeof x))
+do print ("WHNF", whnf (ind_bool (λ (_ : bool), Type) unit empty false))
+do print ("WHNF2", whnf (W bool (ind_bool (λ (_ : bool), Type) unit empty)))
+do print ("WHNF3", whnf (Nat))
+*)
+
+constant zero : Nat
+constant zero_def : zero ≡ sup bool (ind_bool (λ _, Type) unit empty) false (ind_empty (λ _, Nat))

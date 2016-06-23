@@ -424,6 +424,10 @@ and whnf_term_no_betas imps e =
     match (typeof h, whnf_term imps h) with
 
     | (|- forall (?x : ?A), ?B, |- ?eqH : _ == ?h') ⇒
+      (* XXX it seems unlikely that h' has eager arguments and is also
+         an abstraction, so the following match seem to be disjoint with
+         the one below where we discover that h' is an abstraction,
+         so a and a' ought to be the same when h' is an abstraction. *)
       let eqa = match is_arg_reducing h' with
         | lazy => refl a
         | eager => whnf_term imps a
@@ -433,6 +437,13 @@ and whnf_term_no_betas imps e =
       |- _ : _ == ?a' =>
         (* h @[A B] a == h' @[A B] a' : B[a] *)
         let zeta = congr_apply x eqH eqa (refl A) (refl B) in
+
+        (* natural e : B[a] == typeof e *)
+        (* e == h' @[A B] a' : typeof e *)
+        (* typeof zeta is e == h' @[A B] a' : B[a] *)
+        (* convert_eq (typeof zeta) (natural e) is evidence of
+           (e == h' @[A B] a' : B[a]) being equal to (e == h' @[A B] a' : typeof e) *)
+        (* zeta : e == h' @[A B] a' : typeof e *)
         let zeta = convert zeta (convert_eq (typeof zeta) (natural e)) in
         match h' with
         | ⊢ lambda (?y : ?C), ?body =>
@@ -440,14 +451,30 @@ and whnf_term_no_betas imps e =
           | None => zeta
           | Some ?eqCA =>
             let D = typeof body in
-            let B = B where x = convert y eqCA in
-            match now hypotheses = x :: hypotheses in equal_ty imps D B with
+            let B' = B where x = convert y eqCA in
+            (* XXX in the next line, should x be y? If so, at what type? *)
+            match now hypotheses = x :: hypotheses in equal_ty imps D B' with
             | None => zeta
-            | Some ?eqDB =>
-              let beta = beta_step y eqCA eqDB body a' in
+            | Some ?eqDB' =>
+              (* beta is evidence of h' @[A B] a' == body[a'/y] : D[a'/y] *)
+              let beta = beta_step y eqCA eqDB' body a' in
               match typeof beta with
               |- _ == ?e' =>
-                transitivity zeta (transitivity beta (whnf_term_no_betas imps e'))
+                (* beta : h' @[A B] a' == e' : D[a'/y] *)
+                (* xi : h' @[A B] a' == e'' : D[a'/y] *)
+                let xi = transitivity beta (whnf_term_no_betas imps e') in
+                (* zeta : e == h' @[A B] a' : typeof e *)
+                (* At this point we need to show that B[a/y] and D[a'/y] are equal,
+                   see issue #359. However, according to the observation above
+                   a and a' are syntactically equal and so we need B[a/y] == D[a/y]. *)
+                (* theta : D[a'/y] == typeof e *)
+                let theta =
+                  transitivity 
+                  (eqDB' where y = convert a (symmetry eqCA)) (* : D[a/y] == B'[a/y] *)
+                  (natural e) (* : B[a/x] == typeof e *)
+                 in
+                 (* XXX our best attempt at the moment *)
+                 transitivity zeta (convert_eq xi theta)
               end
             end
           end
@@ -555,8 +582,7 @@ let unify_eq imps A =
 let imps = ref []
 
 handle
-  | equal ?a ?b ⇒
-    equal_term !imps a b
+  | equal ?a ?b ⇒ equal_term !imps a b
 
   | coerce ?e ?B =>
     let A = typeof e in
