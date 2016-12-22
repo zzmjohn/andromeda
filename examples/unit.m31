@@ -6,3 +6,5 @@ constant unit_eta : ∏ (x y : unit), x ≡ y
 let unit_contract =
   (now etas = add_eta unit_eta in (λ x, refl x)) : ∏ (x : unit), x ≡ tt
 
+let unit_contractible :: ∀ (x : unit), x == tt =
+    λ x, refl x

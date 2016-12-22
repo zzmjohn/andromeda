@@ -51,6 +51,8 @@ and pattern' =
   | Patt_List of pattern list
   | Patt_Tuple of pattern list
 
+type type_ascription = ML_type_ascription of ml_schema | TT_type_ascription of ty
+
 (** Sugared terms *)
 type term = term' Location.located
 and term' =
@@ -102,9 +104,9 @@ and comp = term
 (** Sugared expressions *)
 and expr = term
 
-and let_clause = Name.ident * Name.ident list * ml_schema option * comp
+and let_clause = Name.ident * Name.ident list * type_ascription option * comp
 
-and letrec_clause = Name.ident * Name.ident * Name.ident list * ml_schema option * comp
+and letrec_clause = Name.ident * Name.ident * Name.ident list * type_ascription option * comp
 
 (** Handle cases *)
 and handle_case =

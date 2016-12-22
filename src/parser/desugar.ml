@@ -674,6 +674,14 @@ and let_clauses ~loc ~yield bound lst =
            | None -> None
          in
          let bound' = Ctx.add_lexical x bound' in
+         let t_opt, c = match t_opt with
+           | Some (Input.ML_type_ascription (Input.ML_Forall (params, t), loc)) ->
+             Some (locate (Syntax.ML_Forall (params, mlty bound params t)) loc), c
+           | Some (Input.TT_type_ascription ty) ->
+              None, (Input.Ascribe (c, ty), loc)
+           | None -> None, c
+         in
+         let c = let_clause ~yield bound ys c in
          let lst' = (x, t_opt, c) :: lst' in
          fold bound' lst' xcs
   in
@@ -698,6 +706,7 @@ and letrec_clauses ~loc ~yield bound lst =
              Some (locate (Syntax.ML_Forall (params, mlty bound params t)) loc)
            | None -> None
          in
+         let y, c = letrec_clause ~yield bound y ys c in
          let lst' = (f, y, t_opt, c) :: lst' in
          fold lst' xcs
   in
